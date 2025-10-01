@@ -5,6 +5,7 @@ const cors = require('cors');
 const bcrypt = require('bcrypt');
 const jwt = require('jsonwebtoken');
 const sqlite3 = require('sqlite3').verbose();
+const path = require('path');
 
 const app = express();
 const server = http.createServer(app);
@@ -13,8 +14,13 @@ const io = new Server(server, { cors: { origin: '*' } });
 app.use(cors());
 app.use(express.json());
 
+// 環境変数
+const PORT = process.env.PORT || 3001;
+const JWT_SECRET = process.env.JWT_SECRET || 'default_secret';
+const DB_FILE = process.env.DB_FILE || './chat.db';
+
 // DB 初期化
-const db = new sqlite3.Database('./chat.db');
+const db = new sqlite3.Database(DB_FILE);
 db.serialize(() => {
   db.run(`CREATE TABLE IF NOT EXISTS users (
     id INTEGER PRIMARY KEY AUTOINCREMENT,
@@ -40,7 +46,7 @@ app.post('/api/auth/login', (req, res) => {
     }
     const token = jwt.sign(
       { id: user.id, username: user.username, is_admin: user.is_admin },
-      'SECRET'
+      JWT_SECRET
     );
     res.json({ user: { id: user.id, username: user.username, is_admin: user.is_admin }, token });
   });
@@ -70,9 +76,12 @@ io.on('connection', socket => {
   });
 });
 
+// 簡易確認ページ（/ にアクセスしたとき）
+app.get('/', (req, res) => {
+  res.send('バックエンドは起動中です');
+});
+
 // サーバー起動
-const PORT = process.env.PORT || 3001;
 server.listen(PORT, () => {
   console.log(`Server running on port ${PORT}`);
 });
-
