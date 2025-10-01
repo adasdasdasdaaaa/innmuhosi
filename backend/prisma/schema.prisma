@@ -1,0 +1,57 @@
+datasource db {
+provider = "postgresql"
+url = env("DATABASE_URL")
+}
+
+
+generator client {
+provider = "prisma-client-js"
+}
+
+
+model Room {
+id Int @id @default(1)
+// 部屋は常に1つに固定。id = 1
+name String @default("main")
+createdAt DateTime @default(now())
+channels Channel[]
+admins Admin[]
+}
+
+
+model User {
+id Int @id @default(autoincrement())
+name String
+password String // bcrypt ハッシュ
+createdAt DateTime @default(now())
+messages Message[]
+adminOf Admin[]
+}
+
+
+model Channel {
+id Int @id @default(autoincrement())
+name String
+roomId Int
+room Room @relation(fields: [roomId], references: [id])
+messages Message[]
+}
+
+
+model Message {
+id Int @id @default(autoincrement())
+content String
+createdAt DateTime @default(now())
+userId Int
+user User @relation(fields: [userId], references: [id])
+channelId Int
+channel Channel @relation(fields: [channelId], references: [id])
+}
+
+
+// 管理者テーブル。User と紐づける
+model Admin {
+id Int @id @default(autoincrement())
+userId Int
+user User @relation(fields: [userId], references: [id])
+}
